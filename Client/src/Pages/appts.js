@@ -14,7 +14,7 @@ const cookies = new Cookies();
 const role = cookies.get("role");
 const id = sessionStorage.getItem('id');
 // const id = 1;
-
+console.log("hi")
 const drawerWidth = "25%";
 
 const useStyles = makeStyles((theme) => ({
