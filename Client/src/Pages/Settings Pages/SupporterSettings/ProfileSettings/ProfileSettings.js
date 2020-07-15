@@ -1,6 +1,7 @@
 import React from "react"
 import {makeStyles, Typography, Button, Avatar, Container, Box, TextField, Grid} from "@material-ui/core";
 import SubmitButton from './SubmitButton.js'
+import FileUpload from '../../../../components/fileUpload'
 
 const useStyles = makeStyles(theme => ({
     paper: {
@@ -166,17 +167,17 @@ const ProfileInformation = (props) => {
                     form className={classes.form}
                     onChange={e => setLinkedIn(e.target.value)}
                 />
-                <TextField
-                    variant="outlined"
-                    margin="normal"
-                    fullWidth
-                    required
-                    label="Profile Image Source"
-                    autoFocus
-                    defaultValue={picture}
-                    form className={classes.form}
-                    onChange={e => setPicture(e.target.value)}
+                <FileUpload
+                    onFileChange={
+                        (e) => {
+                            var fr = new FileReader();
+                            fr.readAsDataURL(e.target.files[0]);
+                            fr.onloadend = (e) => setPicture(e.target.result);
+                        }
+                    }
+                    FileType="image/*"
                 />
+                
                 <TextField
                     variant="outlined"
                     margin="normal"
