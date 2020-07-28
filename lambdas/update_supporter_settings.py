@@ -1,5 +1,6 @@
 #Written by Nhan Le and Hadley Pope
 
+import boto3
 from package.query_db import query
 from package.lambda_exception import LambdaException
 from package.dictionary_to_list import dictionary_to_list
@@ -126,10 +127,9 @@ def update_supporter_settings(event, context):
         user_settings['preferred_name'] = preferred_name
         updated_user_vals.append("preferred_name = :preferred_name")
 
+    #Profile Picture
     if event['picture'] != "":
-        picture = event['picture']
-        user_settings['picture'] = picture
-        updated_user_vals.append("picture = :picture")
+        upload_profile_picture(supporter_id, event['picture'])
 
     if event['bio'] != "":
         bio = event['bio']
@@ -358,3 +358,13 @@ def update_supporter_settings(event, context):
     return {
         'body': "Successfully updated supporter settings"
     }
+
+def upload_profile_picture(id, picData):
+    s_3 = boto3.client('s3')
+    bucket_name_images = 't1-s3-us-east-1-images' # s3 bucket for images
+    file_path = 'profile/' + str(id) + '/image'
+
+    try:
+        s_3.put_object(Bucket=bucket_name_images, Key=file_path, Body=picData)
+    except Exception as e:
+        raise LambdaException("400: Failed to upload file. " + str(e))

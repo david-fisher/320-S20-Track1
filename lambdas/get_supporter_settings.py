@@ -1,5 +1,5 @@
 #Written by Nhan Le
-
+import boto3
 from package.query_db import query
 import json
 
@@ -47,7 +47,7 @@ def get_supporter_settings(event, context):
     block['gender'] = settings[0][5].get('stringValue')
     block['phone'] = settings[0][6].get('stringValue')
     block['bio'] = settings[0][7].get('stringValue')
-    block['picture'] = settings[0][8].get('stringValue')
+    block['picture'] = get_profile_picture(supporter_id)
     block['employer'] = settings[0][9].get('stringValue')
     block['title'] = settings[0][10].get('stringValue')
     block['team_name'] = settings[0][11].get('stringValue')
@@ -185,3 +185,18 @@ def get_supporter_settings(event, context):
         'body': block,
         'statusCode': 200
     }
+
+def get_profile_picture(id):
+    s_3 = boto3.client('s3')
+    bucket_name_images = 't1-s3-us-east-1-images' # s3 bucket for images
+    file_path = 'profile/' + str(id) + '/image'
+
+    try:
+        response = s_3.get_object(Bucket=bucket_name_images, Key=file_path)
+    except Exception as e:
+        if(e.response['Error']['Code'] == "NoSuchKey"):
+            return ""
+        else:
+            raise LambdaException("400: Failed to download file." + str(e))
+
+    return response['Body'].read().decode('utf-8')

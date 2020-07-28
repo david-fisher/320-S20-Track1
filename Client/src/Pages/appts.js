@@ -159,7 +159,9 @@ const ResponsiveDrawer = (props) => {
       fetch('https://7jdf878rej.execute-api.us-east-2.amazonaws.com/test/appointments/students/%7Bid%7D?student_id='+id)
       .then(res => res.json())
       .then(json => {
+        console.log("***************");
         console.log(json.body)
+        console.log("***************")
         setLoaded(true);
         setAppointments(json.body);
       })

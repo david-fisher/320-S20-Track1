@@ -5,22 +5,8 @@ import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
 import {Auth} from 'aws-amplify';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link
-        color="inherit"
-        href="https://github.com/david-fisher/320-S20-Track1/"
-      >
-        CICS Careers
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+import { withTranslation } from 'react-i18next';
+import Copyright from './Copyright';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -80,7 +66,7 @@ const DialogActions = withStyles((theme) => ({
   },
 }))(MuiDialogActions);
 
-export default function ResetPass() {
+function ResetPass({t, i18n}) {
   const [email, setEmail] = useState("");
   const [open, setOpen] = React.useState(false);
 
@@ -123,8 +109,10 @@ export default function ResetPass() {
     <Container component="main" maxWidth="xs">
       <CssBaseline />
       <div className={classes.paper}>
+        <img  height="175" width="175" src ="cicscareers_logo_3.png"></img>
+        <br/>
         <Typography component="h1" variant="h5">
-          Reset Password
+          {t('reset-password')}
         </Typography>
         <form className={classes.form} noValidate>
           <TextField
@@ -133,7 +121,7 @@ export default function ResetPass() {
             required
             fullWidth
             id="email"
-            label="Email Address"
+            label={t('email')}
             name="email"
             autoComplete="email"
             autoFocus
@@ -143,7 +131,7 @@ export default function ResetPass() {
           {!validEmail(email) && email.length > 0 && (
             <FormControl className={classes.error} error>
               <FormHelperText>
-                Please enter a valid email
+                {t('invalid-email')}
               </FormHelperText>
             </FormControl>
           )}
@@ -155,15 +143,15 @@ export default function ResetPass() {
             disabled={!validateForm()}
             onClick={handleSubmitButton()}
           >
-            Request Password Reset
+            {t("reset-password-button")}
           </Button>
           <Dialog aria-labelledby="customized-dialog-title" open={open}>
             <DialogTitle id="customized-dialog-title" >
-              Password Reset Requested
+              {t('reset-password-requested')}
             </DialogTitle>
             <DialogContent dividers>
               <Typography gutterBottom>
-              A code will be sent to {email} to reset your password
+              {t('reset-password-email-sent', {email})}
               </Typography>
             </DialogContent>
             <DialogActions>
@@ -187,3 +175,5 @@ export default function ResetPass() {
     </Container>
   );
 }
+
+export default withTranslation('auth')(ResetPass)

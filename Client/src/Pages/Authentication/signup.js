@@ -2,22 +2,7 @@ import React, { useState, } from "react";
 import {FormHelperText, FormControl, Button, CssBaseline, TextField, Link, Grid, Box, Typography, makeStyles, Container, 
   Dialog, DialogActions, DialogContent, DialogTitle} from "@material-ui/core";
 import { Auth } from "aws-amplify";
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link
-        color="inherit"
-        href="https://github.com/david-fisher/320-S20-Track1/"
-      >
-        CICS Careers
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+import Copyright from './Copyright';
 
 const useStyles = makeStyles(theme => ({
   paper: {

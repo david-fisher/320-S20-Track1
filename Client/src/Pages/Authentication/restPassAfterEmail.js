@@ -5,22 +5,8 @@ import MuiDialogTitle from '@material-ui/core/DialogTitle';
 import MuiDialogContent from '@material-ui/core/DialogContent';
 import MuiDialogActions from '@material-ui/core/DialogActions';
 import {Auth} from 'aws-amplify';
-
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link
-        color="inherit"
-        href="https://github.com/david-fisher/320-S20-Track1/"
-      >
-        CICS Careers
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+import Copyright from './Copyright';
+import {withTranslation} from 'react-i18next';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -82,7 +68,7 @@ const DialogActions = withStyles((theme) => ({
   },
 }))(MuiDialogActions);
 
-export default function SignIn() {
+function SignIn({t, i18n}) {
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [code, setCode] = useState("");
@@ -160,7 +146,7 @@ export default function SignIn() {
             required
             fullWidth
             name="verification code"
-            label="Enter verification code"
+            label={t('enter-verification-code')}
             type="code"
             id="code"
             onChange={e => setCode(e.target.value)}
@@ -168,7 +154,7 @@ export default function SignIn() {
           {!codeCorrect && (
             <FormControl className={classes.error} error>
               <FormHelperText>
-              This code is invalid
+              {t('invalid-verification-code')}
               </FormHelperText>
             </FormControl>
           )}
@@ -178,7 +164,7 @@ export default function SignIn() {
             required
             fullWidth
             name="Email address"
-            label="Email address"
+            label={t('email')}
             type="email"
             id="email"
             onChange={e => setEmail(e.target.value)}
@@ -205,7 +191,7 @@ export default function SignIn() {
           {!validatePass(password) && password.length > 0 && (
             <FormControl className={classes.error} error>
               <FormHelperText>
-              Your password should be at least 8 characters long and should include a lowercase, uppercase, and special character.
+              {t('invalid-password')}
               </FormHelperText>
             </FormControl>
           )}
@@ -224,7 +210,7 @@ export default function SignIn() {
           {!samePass(password, password2) && password.length > 0 && password2.length > 0 && (
             <FormControl className={classes.error} error>
               <FormHelperText>
-                Passwords do not match
+                {t('passwords-unmatch')}
               </FormHelperText>
             </FormControl>
           )}
@@ -268,3 +254,5 @@ export default function SignIn() {
     </Container>
   );
 }
+
+export default withTranslation('auth')(SignIn);

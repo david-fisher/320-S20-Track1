@@ -4,3 +4,4 @@ node_modules
 **/.vscode
 **/external_libraries
 **/lambdas_old
+!Client/public/locales/**

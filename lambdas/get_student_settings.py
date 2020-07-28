@@ -1,3 +1,4 @@
+import boto3
 from package.query_db import query
 from package.lambda_exception import LambdaException
 
@@ -15,12 +16,11 @@ def get_student_settings_handler(event, context):
 
     if len(existing_student) <= 0:
             raise LambdaException("404: Student does not exist")
-        
 
     response = {}
     error_messages = []
 
-    users_sql = "SELECT first_name, last_name, email, preferred_name, picture, bio, pronouns, gender, phone FROM users WHERE id = :student_id;"
+    users_sql = "SELECT first_name, last_name, email, preferred_name, bio, pronouns, gender, phone FROM users WHERE id = :student_id;"
     user_data = []
     try:
         user_data = query(users_sql, student_id_param)['records'][0]
@@ -38,31 +38,27 @@ def get_student_settings_handler(event, context):
         response['preferred_name'] = None
         
     if 'stringValue' in user_data[4]: 
-        response['picture'] = user_data[4]['stringValue']
-    else:
-        response['picture'] = None
-        
-    if 'stringValue' in user_data[5]: 
-        response['bio'] = user_data[5]['stringValue']
+        response['bio'] = user_data[4]['stringValue']
     else:
         response['bio'] = None
     
+    if 'stringValue' in user_data[5]:    
+        response['pronouns'] = user_data[5]['stringValue']
+    else:
+        response['pronouns'] = None
+        
     if 'stringValue' in user_data[6]:    
-        response['pronouns'] = user_data[6]['stringValue']
+        response['gender'] = user_data[6]['stringValue']
     else:
         response['pronouns'] = None
         
     if 'stringValue' in user_data[7]:    
-        response['gender'] = user_data[7]['stringValue']
-    else:
-        response['pronouns'] = None
-        
-    if 'stringValue' in user_data[8]:    
-        response['phone'] = user_data[8]['stringValue']
+        response['phone'] = user_data[7]['stringValue']
     else:
         response['phone'] = None    
 
-
+    response['picture'] = get_profile_picture(student_id)
+    
     students_sql = "SELECT grad_year, resume, grad_student FROM students WHERE student_id = :student_id;"
     student_data = []
     try:
@@ -211,7 +207,6 @@ def get_student_settings_handler(event, context):
         student_notification_pref_sql = "SELECT notification_type_name FROM notification_type WHERE notification_type_id = " + notification_ids + ";"
         try:
             student_notification_prefs = query(student_notification_pref_sql)['records']
-
         except Exception as e:
             error_messages.append(str(e) + " get_student_settings.py, line 199")
 
@@ -221,8 +216,6 @@ def get_student_settings_handler(event, context):
 
         response['notification_preferences'] = notification_prefs
 
-
-
     if len(error_messages) > 0:
         response['statusCode'] = 500
         response['errorMessage'] = error_messages
@@ -230,3 +223,18 @@ def get_student_settings_handler(event, context):
     else:
         response['statusCode'] = 200
         return response
+
+def get_profile_picture(student_id):
+    s_3 = boto3.client('s3')
+    bucket_name_images = 't1-s3-us-east-1-images' # s3 bucket for images
+    file_path = 'profile/' + str(student_id) + '/image'
+
+    try:
+        response = s_3.get_object(Bucket=bucket_name_images, Key=file_path)
+    except Exception as e:
+        if(e.response['Error']['Code'] == "NoSuchKey"):
+            return ""
+        else:
+            raise LambdaException("400: Failed to download file." + str(e))
+
+    return response['Body'].read().decode('utf-8')
