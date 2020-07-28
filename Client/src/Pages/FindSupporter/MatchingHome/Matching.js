@@ -288,7 +288,7 @@ const ResponsiveDrawer = (props) => {
           <br/>
           <br/>
           <br/>
-          <Typography align="center" variant="h5">Filters</Typography>
+          <Typography align="center" variant="h5">Filter to Find Supporter</Typography>
           <TextField
             variant="outlined"
             margin="normal"
@@ -400,7 +400,7 @@ const ResponsiveDrawer = (props) => {
           </Grid>
           <br/>
           <br/>
-          {newList.length>0 && <Typography align="center" variant="h4">Recommended Supporters</Typography>}
+          {newList.length>0 && <Typography align="center" variant="h4">Make an Appointment with Recommended Supporter</Typography>}
           {newList.length===0 && <Typography align="center" variant="h4">We couldn't find a supporter with those attributes. Please try widening your search.</Typography>}
           <br/>
           <br/>
