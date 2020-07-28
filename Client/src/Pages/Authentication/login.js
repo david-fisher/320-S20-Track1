@@ -3,23 +3,8 @@ import { Button, TextField, Link, Grid, Box, Typography, Container, FormControl,
 import { makeStyles } from "@material-ui/core/styles";
 import { Auth } from "aws-amplify";
 import Cookies from "universal-cookie";
-
-//Function that shows the copyright (will get updated to the appropiate one later)
-function Copyright() {
-  return (
-    <Typography variant="body2" color="textSecondary" align="center">
-      {"Copyright © "}
-      <Link
-        color="inherit"
-        href="https://www.cics.umass.edu/careers"
-      >
-        CICS Careers
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
+import { withTranslation } from 'react-i18next';
+import Copyright from './Copyright';
 
 const useStyles = makeStyles(theme => ({
   paper: {
@@ -38,8 +23,9 @@ const useStyles = makeStyles(theme => ({
   },
  }));
 
+function SignIn({t, i18n}) {
+  console.log(i18n.t('email'));
 
-export default function SignIn() {
   //sets styling
   const classes = useStyles();
 
@@ -132,7 +118,7 @@ export default function SignIn() {
             required
             fullWidth
             id="email"
-            label="Email Address"
+            label={t('email')}
             name="email"
             autoComplete="email"
             autoFocus
@@ -145,7 +131,7 @@ export default function SignIn() {
             required
             fullWidth
             name="password"
-            label="Password"
+            label={t('password')}
             type="password"
             id="password"
             form className={classes.form}
@@ -162,24 +148,24 @@ export default function SignIn() {
             onClick={handleSubmit}
             disabled={!validateForm()}
           >
-            Sign In
+            {t('sign-in')}
           </Button>
           {!validInfo && (
             <FormControl className={classes.error} error>
               <FormHelperText>
-                Incorrect username or password.
+                {t('invalid-credentials')}
               </FormHelperText>
             </FormControl>
           )}
           <Grid container form className={classes.form}>
             <Grid item xs>
               <Link href="/forgot-password" variant="body2">
-                Forgot password?
+                {t('forgot-password')}
               </Link>
             </Grid>
             <Grid item>
               <Link href="/signup" variant="body2">
-                {"Don't have an account? Sign Up"}
+                {t('sign-up')}
               </Link>
             </Grid>
           </Grid>
@@ -191,3 +177,5 @@ export default function SignIn() {
     </Container>
   );
 }
+
+export default withTranslation('auth')(SignIn);

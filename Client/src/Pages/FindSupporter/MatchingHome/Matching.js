@@ -6,13 +6,17 @@ import SupporterCard from "../SupporterPanels/supporterCards.js"
 //import topicsList from "../topics.js"
 //import tagsList from "../tags.js"
 import convertTime from "../convertTime.js"
-import { DatePicker} from "@material-ui/pickers";
+import { DatePicker } from "@material-ui/pickers";
 import useStyles from "./MatchingStyles.js"
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import NavigateBeforeIcon from '@material-ui/icons/NavigateBefore';
-
+import { default as StringDistance } from 'fuzzball';
+import { useAlert } from 'react-alert';
 
 const ResponsiveDrawer = (props) => {
+  // Initialize alert
+  const alert = useAlert();
+ 
   //Initialize all of the constants
   const [selectedDate, handleDateChange] = React.useState(new Date());
   const [stateTopics, setStateTopics]=React.useState([]);
@@ -28,11 +32,6 @@ const ResponsiveDrawer = (props) => {
   nextWeek.setDate(nextWeek.getDate() + 7);
   const [beginDate, setBeginDate] = React.useState(today);
   const [endDate, setEndDate] = React.useState(nextWeek);
-  const scores = {}
-  const sortedList=[]
-  const topicsList=[]
-  const tagsList=[]
-
 
   const initial_fetch_url = formatFetchURL(beginDate, endDate);
 
@@ -53,8 +52,6 @@ const ResponsiveDrawer = (props) => {
     myFetch(url).then((json) => {
       if(json.body !== undefined) {
         setSupporters(json.body);
-        getTagsAndTopics()
-        //setStateTopics(topicsList ? topicsList : [])
         setLoaded(true);
       } else {
         setLoaded(true);
@@ -85,11 +82,11 @@ const ResponsiveDrawer = (props) => {
 
   //This is temporary, will eventually be gotten from lambda
   const blockTime=30;
-
   
   //For hard filtering. Commented out code will hard filter the given fields
   var newList = (supporters.filter(supporter => supporter.day.substring(0,4)===selectedDate.getFullYear().toString() && 
   supporter.day.substring(8,10)===getTheMonth(selectedDate.getDate().toString()) && supporter.day.substring(5,7)===getTheMonth(selectedDate.getMonth()+1) ));
+  
   //supporter => String(supporter.name.toLowerCase()).includes(name.toLowerCase()))).filter(
   //supporter => supporter.rating>=rating).filter(
   //supporter => stateTopics.every(val => supporter.topics.includes(val))).filter(
@@ -119,10 +116,15 @@ const ResponsiveDrawer = (props) => {
 
   //Decrements day by one
   function previousDay(){
-    var newDate = new Date()
-    newDate.setMonth(selectedDate.getMonth())
+    var today = new Date();
+    var newDate = new Date(today);
+    newDate.setMonth(selectedDate.getMonth());
     newDate.setDate(selectedDate.getDate() - 1);
-    processDateChange(newDate)
+    if(newDate < today) { // We can't schedule appointments in the past.
+      alert.error("You can't schedule appointments in the past");
+    } else {
+      processDateChange(newDate);
+    }
   }
 
   //Sets time based on the slider
@@ -154,27 +156,6 @@ const ResponsiveDrawer = (props) => {
     }
     return false
   }
-
-  //Generates the list of topics and tags to be used by the autocomplete filters
-  function getTagsAndTopics(){
-    if(!newList){
-      return 
-    }
-    for(let i=0;i<newList.length;i++){
-      for(let j=0;j<newList[i].tags.length;j++){
-        if(!tagsList.includes(newList[i].tags[j])){
-          tagsList.push(newList[i].tags[j])
-        }
-      }
-      for(var j in newList[i].topics){
-        if(!topicsList.includes(j)){
-          topicsList.push(j)
-        }
-      }
-    }
-  }
-
-  getTagsAndTopics()
   
   ///////////////////////////
   //This handles the sorting of the supporters
@@ -182,70 +163,42 @@ const ResponsiveDrawer = (props) => {
 
   //Inputs a supporter and returns their score 
   function score(supporter){
-    var supporterScore=0
-    var count=stateTopics.length+stateTags.length+3
+    var supporterScore = 0;
 
-    if(supporter.name.toLowerCase().includes(name.toLowerCase())){
-      supporterScore++
-    }
-    for(let i=0;i<stateTags.length;i++){
-      if(supporter.tags.includes(stateTags[i])){
-        supporterScore++
+    // Approximate string matching.
+    supporterScore += StringDistance.token_set_ratio(name, supporter.name) / 100; // (token_set_ratio gives percentage so we need to scale it)
+    let matches = 0;
+    for(let i = 0; i < stateTags.length; i++) {
+      if(supporter.tags.includes(stateTags[i])) {
+        matches++;
       }
     }
-    for(let i=0;i<stateTopics.length;i++){
-      if(supporter.topics[stateTopics[i]]){
-        supporterScore++
+    
+    for(let i=0; i < stateTopics.length; i++) {
+      if(supporter.topics[stateTopics[i]]) {
+        matches++;
       }
     }
+    
+    if(stateTopics.length + stateTags.length > 0) supporterScore += matches/stateTopics.length;
+    
+    supporterScore += 0.0001 * (supporter.rating - rating)/5;
+
     if(checkTimeInRange(sliderTime[0],sliderTime[1],supporter.timeBlocks)){
-      supporterScore++
-    }
-
-    if(rating<=supporter.rating){
       supporterScore++
     }
 
     console.log("name " + supporter.name)
     console.log("supporter score " + supporterScore)
-    console.log("count " + count)
     console.log("state tags and topics " + stateTopics)
-    return (supporterScore/count)+0.0001*supporter.rating
-  }
-
-  //Maps every supporter / score pair to the score dictionary
-  newList.map(supporter => scores[supporter.supporter_id]=score(supporter))
-
-  //Creates an array of supporter ids
-  const supporter_array=[]
-  for(let i=0;i<newList.length;i++){
-    supporter_array.push(newList[i].supporter_id)
-  }
-
-  //Compares two objects based on their score
-  function compare(a,b) {
-    if (scores[a] < scores[b])
-      return 1;
-    if (scores[a] > scores[b])
-      return -1;
-    return 0;
+    return supporterScore;
   }
   
-  //Sorts the supporter id array by score
-  supporter_array.sort(compare)
+  // Maps every supporter / score pair to the score dictionary
+  newList.forEach(supporter => supporter.score = score(supporter));
 
-  //Converts the array of ids to array of supporters
-  function returnSupporters(array){
-    for(let i=0;i<array.length;i++){
-      for(let j=0;j<newList.length;j++){
-        if(newList[j].supporter_id===array[i]){
-          sortedList.push(newList[j]);
-        }
-      }
-    }
-    return sortedList
-  }
-  returnSupporters(supporter_array)
+  // Sort the newList
+  newList = newList.sort((a, b) => b.score - a.score);
 
   /////////////////////////////////////////////////
   //end
@@ -336,8 +289,10 @@ const ResponsiveDrawer = (props) => {
               autoOk
               align="center"
               variant="inline"
+              inputProps={{style: {textAlign:'center'}}}
               value={selectedDate}
               onChange={processDateChange}
+              minDate={new Date()}
             />
           </Box>
           <br/>
@@ -388,8 +343,10 @@ const ResponsiveDrawer = (props) => {
               autoOk
               align="center"
               variant="inline"
+              inputProps={{style: {textAlign:'center'}}}
               value={selectedDate}
               onChange={processDateChange}
+              minDate={new Date()}
             />
             </Grid>
             <Grid item>
@@ -405,7 +362,7 @@ const ResponsiveDrawer = (props) => {
           <br/>
           <br/>
           {/*Maps each supporter to a card*/}
-          {sortedList.map(supporterObj => getSupporterCard(supporterObj,scores[supporterObj.supporter_id]))}
+          {newList.map(supporterObj => getSupporterCard(supporterObj, supporterObj.score))}
         </main>
       </div>
     );

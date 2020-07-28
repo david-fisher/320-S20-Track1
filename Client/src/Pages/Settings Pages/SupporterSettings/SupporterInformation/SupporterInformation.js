@@ -287,7 +287,7 @@ const ProfileInformation = (props) => {
                     <TextField
                         {...params}
                         variant="outlined"
-                        label="Supporter Specialization Areas"
+                        label="Help Needed Topics"
                     />
                     )}
                     onChange={(e,v) => setSpecializations(v)}
@@ -302,7 +302,7 @@ const ProfileInformation = (props) => {
                     <TextField
                         {...params}
                         variant="outlined"
-                        label="Supporter Tags"
+                        label="Supporter Specialities"
                     />
                     )}
                     onChange={(e,v) => setTags(v)}

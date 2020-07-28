@@ -159,11 +159,23 @@ const SupporterCard = (props) => {
       clickable 
       value={st}
       variant={(time === st) ? 'default' : 'outlined'}
+      disabled={isTimeChipDisabled(st)}
       color="primary" 
       label={convertTime(st)}
       className={classes.tagChip}
       onClick={ () => chipFilterTime(st) }
     />
+  }
+
+  function isTimeChipDisabled(st) {
+    let today = new Date();
+    let currDate = new Date(today);
+    currDate.setFullYear(parseInt(day.substring(0, 4)));
+    currDate.setMonth(day.substring(5, 7) - 1);
+    currDate.setDate(day.substring(8, 10));
+    
+    if(currDate > today) return false;
+    return (st < (today.getHours() * 60 + today.getMinutes()))
   }
 
   //Pushes all possible start times to an array to be converted to chips
@@ -332,7 +344,7 @@ const SupporterCard = (props) => {
             Appointment Medium: {medium}
           </Typography>
           <Typography gutterBottom>
-            Additional Comments
+            Additional Comments: {comment}
           </Typography>
           <TextField
             id="outlined-multiline-static"
@@ -359,10 +371,10 @@ const SupporterCard = (props) => {
         </DialogTitle>
         <DialogContent dividers>
           <Typography gutterBottom>
-            Your appointment with {name} has been created
+            Your appointment with {name} has been created.
           </Typography>
           <Typography gutterBottom>
-            You will receive a verification email at {email} to remind you of your appointment
+            You will receive a verification email to remind you of your appointment.
           </Typography>
         </DialogContent>
         <DialogActions>

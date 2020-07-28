@@ -1,3 +1,4 @@
+import boto3
 from package.query_db import query
 from package.dictionary_to_list import dictionary_to_list
 from package.lambda_exception import LambdaException
@@ -7,6 +8,11 @@ from package.lambda_exception import LambdaException
 
 #function updates the student profile details in the database
 def update_student_profile(event, context):
+    # Student identifier
+    if 'student_id' in event:
+        student_id = int(event['student_id'])
+    else:
+        raise LambdaException("Invalid input: No user Id")
 
     student_id = int(event['student_id'])
     student_id_param = {'name' : 'student_id', 'value' : {'longValue' : student_id}}
@@ -170,11 +176,6 @@ def update_student_profile(event, context):
         user_settings['preferred_name'] = preferred_name
         updated_user_vals.append("preferred_name = :preferred_name")
 
-    if event['picture'] != "":
-        picture = event['picture']
-        user_settings['picture'] = picture
-        updated_user_vals.append("picture = :picture")
-
     if event['bio'] != "":
         bio = event['bio']
         user_settings['bio'] = bio
@@ -205,8 +206,11 @@ def update_student_profile(event, context):
         except Exception as e:
             raise LambdaException("500: Unable to update users table, " + str(e))
 
+    # Profile Picture
+    if event['picture'] != "":
+        upload_profile_picture(student_id, event['picture'])
 
-    #Student Settings
+    # Student Settings
     student_settings = {}
     updated_student_vals = []
 
@@ -246,3 +250,13 @@ def update_student_profile(event, context):
     return {
         'body' : "Successfully updated student profile"
     }
+
+def upload_profile_picture(student_id, picData):
+    s_3 = boto3.client('s3')
+    bucket_name_images = 't1-s3-us-east-1-images' # s3 bucket for images
+    file_path = 'profile/' + str(student_id) + '/image'
+
+    try:
+        s_3.put_object(Bucket=bucket_name_images, Key=file_path, Body=picData)
+    except Exception as e:
+        raise LambdaException("400: Failed to upload file. " + str(e))
