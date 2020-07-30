@@ -128,12 +128,15 @@ const ProfileInformation = (props) => {
           Profile Information
         </Typography>
         <form className={classes.form}>
-          <Avatar
-            // alt={firstName}
-            color="primary"
-            className={classes.avatar}
-            src={picture}
-          />
+          <div>
+            <Avatar
+              // alt={firstName}
+              color="primary"
+              className={classes.avatar}
+              src={picture}
+            />
+            <input type="file" />
+          </div >
           <br />
           <Grid container>
             <Grid item xs={3}>
