@@ -32,6 +32,7 @@
     "react-alert-template-basic": "^1.0.0",
     "react-big-calendar": "^0.24.5",
     "react-calendar": "^3.0.1",
+    "react-device-detect": "^1.13.1",
     "react-dom": "^16.13.1",
     "react-i18next": "^11.7.0",
     "react-router-dom": "^5.1.2",

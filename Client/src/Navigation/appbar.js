@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
-import { makeStyles } from "@material-ui/core/styles";
-import {AppBar, Avatar, Toolbar, Typography, MenuItem, Button, Menu, Link,Dialog} from "@material-ui/core";
+import useStyles from "./AppBarStyles"
+import {AppBar, Avatar, Toolbar, ListItemIcon, ListItemText, Typography, MenuItem, Button, Menu, Link,Dialog} from "@material-ui/core";
 // import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -8,6 +8,14 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Slide from '@material-ui/core/Slide';
 import Cookies from "universal-cookie";
+import {isMobile} from 'react-device-detect';
+import AccountCircleIcon from '@material-ui/icons/AccountCircle';
+import SettingsIcon from '@material-ui/icons/Settings';
+import UpdateIcon from '@material-ui/icons/Update';
+import ExitToAppIcon from '@material-ui/icons/ExitToApp';
+import AddIcon from '@material-ui/icons/Add';
+import ContactsIcon from '@material-ui/icons/Contacts';
+import HelpIcon from '@material-ui/icons/Help';
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -15,84 +23,8 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 
 const cookies = new Cookies();
 const role = cookies.get('role')
-var primary_color="#881c1c"
-if (role==='supporter'){
-  primary_color="#003b5c"
-}else if (role==='admin'){
-  primary_color="#41273b"
-}
-
-const useStyles = makeStyles(theme => ({
-
-  root: {
-    flexGrow: 1,
-  },
-  overrides: {
-    MuiButton: {
-      root: {
-        borderRadius: 30,
-      },
-    },
-  },
-  menuButton: {
-    flexGrow: 1,
-  },
-  bar: {
-    paddingTop: theme.spacing(1),
-    paddingBottom: theme.spacing(1),
-    minHeight: 80,
-  },
-  logo: {
-    color: primary_color,
-    fontSize: "255%",
-    borderRadius: "40em",
-    "&:hover": {
-      backgroundColor: "#FFFFFF",
-    },
-  },
-  button: {
-    paddingLeft: theme.spacing(3),
-    paddingRight: theme.spacing(3),
-
-    marginLeft: "1%",
-    color: primary_color,
-    fontSize: '120%',
-    borderRadius: "40em",
-    "&:hover": {
-      backgroundColor: primary_color,
-      color: "#FFF",
-    },
-  },
-  pictureButton: {
-    marginLeft: "1%",
-    borderRadius: "100em",
-    "&:hover": {
-      backgroundColor: primary_color,
-    },
-  },
-  large: {
-    width: theme.spacing(7),
-    height: theme.spacing(7),
-  },
-  spacer: {
-    flexGrow: 1,
-  },
-  modal: {
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  paper: {
-    backgroundColor: theme.palette.background.paper,
-    border: '2px solid #000',
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(2, 4, 3),
-  },
-}));
-
 
 export default function MenuAppBar(props) {
-
 
   const [PossibleRoles,SetPossibleRoles] = React.useState([]);
   //Gets info from the session 
@@ -217,10 +149,15 @@ return RenderRoles;
           </Button>
           <Typography className={classes.spacer}>
           </Typography>
-         {role.toLowerCase()==='student' && 
-          <Button variant="text" href="/" className={classes.button}>Create Appointment</Button>}
-          <Button variant="text" href="/appointments" className={classes.button}>My Appointments</Button>
-          <Button variant="text" href="/FAQ" className={classes.button}>FAQ</Button>
+          {role.toLowerCase()==='student' && !isMobile &&
+            <Button variant="text" href="/" className={classes.button}>Create Appointment</Button>
+          }
+          {!isMobile &&
+           <>
+            <Button variant="text" href="/appointments" className={classes.button}>My Appointments</Button>
+            <Button variant="text" href="/FAQ" className={classes.button}>FAQ</Button>
+            </>
+          }
           <Button className={classes.pictureButton} onClick={handleMenu}>
             <Avatar alt={name} 
               src={image}
@@ -228,89 +165,155 @@ return RenderRoles;
             </Avatar>
           </Button>
           <Menu
-  id="menu-appbar"
-  anchorEl={anchorEl}
-  anchorOrigin={{
-    vertical: "top",
-    horizontal: "right"
-  }}
-  keepMounted
-  transformOrigin={{
-    vertical: "top",
-    horizontal: "right"
-  }}
-  open={open}
-  onClose={handleClose}
->
-  <MenuItem onClick={handleClose}>
-    <Link href="/account">
-      <Typography component="h6" variant="h6">
-        My Account
-      </Typography>
-    </Link>
-  </MenuItem>
-
-    {role.toLowerCase()==='admin' && (
-      <MenuItem onClick={handleClose}>
-        <Link href="/admin-settings">
-          <Typography component="h6" variant="h6">
-            Admin Settings
-          </Typography>
-        </Link>
-      </MenuItem>
-    )}
-      {(role.toLowerCase()==='supporter')  && (
-      <MenuItem onClick={handleClose}>
-        <Link href="/supporter-settings">
-          <Typography component="h6" variant="h6">
-            Supporter Settings
-          </Typography>
-        </Link>
-      </MenuItem>
-    )}
-    
- 
-  {(PossibleRoles.length!=1)&&(<MenuItem onClick={handleModalOpen}>
-  <Link >
-      <Typography component="h6" variant="h6">
-        Switch Role
-      </Typography>
-      </Link>
-  </MenuItem>)}
-       <Dialog
-        open={openModal}
-        TransitionComponent={Transition}
-        keepMounted
-        onClose={handleModalClose}
-        aria-labelledby="alert-dialog-slide-title"
-        aria-describedby="alert-dialog-slide-description"
-      >
-        <DialogTitle id="alert-dialog-slide-title">{"Choose role"}</DialogTitle>
-        <DialogContent>
-          <DialogContentText id="alert-dialog-slide-description">
-           Given below are the list of the roles that you have been registered as. Select the role you want to switch to.
-          </DialogContentText>
-          <div style={{textAlign:'center'}}>
-          {renderRolesInModal()}
-          </div>
-        </DialogContent>
-        <DialogActions>
-          
-          <Button className={classes.button} onClick={handleModalClose} >
-            Close
-          </Button>
-        </DialogActions>
-      </Dialog>
-  
-
-  <MenuItem onClick={logout}>
-    <Link href="/login">
-      <Typography component="h6" variant="h6">
-        Log Out
-      </Typography>
-    </Link>
-  </MenuItem>
-</Menu>
+            id="menu-appbar"
+            anchorEl={anchorEl}
+            anchorOrigin={{
+              vertical: "top",
+              horizontal: "right"
+            }}
+            keepMounted
+            transformOrigin={{
+              vertical: "top",
+              horizontal: "right"
+            }}
+            open={open}
+            onClose={handleClose}
+          >
+            {role.toLowerCase()==='student' && isMobile && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <AddIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/">
+                    <Typography component="h6" variant="h6">
+                      Create Appointment
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {isMobile && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <ContactsIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/appointments">
+                    <Typography component="h6" variant="h6">
+                      My Appointments
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {isMobile && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <HelpIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/FAQ">
+                    <Typography component="h6" variant="h6">
+                      FAQ
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {role.toLowerCase()!=='admin' && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <AccountCircleIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/account">
+                    <Typography component="h6" variant="h6">
+                      My Account
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {role.toLowerCase()==='admin' && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <SettingsIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/admin-settings">
+                    <Typography component="h6" variant="h6">
+                      Admin Settings
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {role.toLowerCase()==='supporter' && (
+              <MenuItem onClick={handleClose}>
+                <ListItemIcon>
+                  <SettingsIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link href="/supporter-settings">
+                    <Typography component="h6" variant="h6">
+                      Supporter Settings
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            {(PossibleRoles.length>1) && (
+              <MenuItem onClick={handleModalOpen}>
+                <ListItemIcon>
+                  <UpdateIcon/>
+                </ListItemIcon>
+                <ListItemText>
+                  <Link>
+                    <Typography component="h6" variant="h6">
+                      Switch Role
+                    </Typography>
+                  </Link>
+                </ListItemText>          
+              </MenuItem>
+            )}
+            <MenuItem onClick={logout}>
+              <ListItemIcon>
+                <ExitToAppIcon/>
+              </ListItemIcon>
+              <ListItemText>
+                <Link href="/login">
+                  <Typography component="h6" variant="h6">
+                    Log Out
+                  </Typography>
+                </Link>
+              </ListItemText>   
+            </MenuItem>
+          </Menu>
+            <Dialog
+            open={openModal}
+            TransitionComponent={Transition}
+            keepMounted
+            onClose={handleModalClose}
+            aria-labelledby="alert-dialog-slide-title"
+            aria-describedby="alert-dialog-slide-description"
+          >
+            <DialogTitle id="alert-dialog-slide-title">{"Choose role"}</DialogTitle>
+            <DialogContent>
+              <DialogContentText id="alert-dialog-slide-description">
+                Given below are the list of the roles that you have been registered as. Select the role you want to switch to.
+              </DialogContentText>
+              <div style={{textAlign:'center'}}>
+              {renderRolesInModal()}
+              </div>
+            </DialogContent>
+            <DialogActions>
+              
+              <Button className={classes.button} onClick={handleModalClose} >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
         </Toolbar>
       </AppBar>
     </div>

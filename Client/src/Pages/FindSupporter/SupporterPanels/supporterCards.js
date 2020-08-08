@@ -9,6 +9,7 @@ import Cookies from "universal-cookie";
 import convertTime from "../convertTime.js"
 import timeToString from '../timeToString.js'
 import cardStyles from './CardStyles'
+import {isMobile} from 'react-device-detect';
 
 const SupporterCard = (props) => {
   //Initialize all the constants
@@ -223,22 +224,28 @@ const SupporterCard = (props) => {
         ////////////////////////////////////////////////
         }
         <Grid container>
-          <Grid item xs={2}>
+          <Grid item md={2} xs={7}>
             <Typography className={classes.heading}>{name}</Typography>
           </Grid>
-          <Grid item xs={2}>
+          <Grid item md={2} xs={5}>
             <Typography className={classes.heading}>{mapScore(score)}</Typography>
           </Grid>
-          <Grid item xs={5}>
-            {!expanded && has_tags[0] && <Chip label={has_tags[0]} size="small" className={classes.filtered_tag} /> || 
-              !expanded && topThreeTags[getIndex(0)] && <Chip label={topThreeTags[getIndex(0)]} size="small" className={classes.tagChip} />}
-            {!expanded && has_tags[1] && <Chip label={has_tags[1]} size="small" className={classes.filtered_tag} /> || 
-              !expanded && topThreeTags[getIndex(1)] && <Chip label={topThreeTags[getIndex(1)]} size="small" className={classes.tagChip} />}
-            {!expanded && has_tags[2] && <Chip label={has_tags[2]} size="small" className={classes.filtered_tag} /> || 
-              !expanded && topThreeTags[getIndex(2)] && <Chip label={topThreeTags[getIndex(2)]} size="small" className={classes.tagChip} />}
+          <Grid item md={5} xs={0}>
+            { !isMobile &&
+              <>
+              {!expanded && has_tags[0] && <Chip label={has_tags[0]} size="small" className={classes.filtered_tag} /> || 
+                !expanded && topThreeTags[getIndex(0)] && <Chip label={topThreeTags[getIndex(0)]} size="small" className={classes.tagChip} />}
+              {!expanded && has_tags[1] && <Chip label={has_tags[1]} size="small" className={classes.filtered_tag} /> || 
+                !expanded && topThreeTags[getIndex(1)] && <Chip label={topThreeTags[getIndex(1)]} size="small" className={classes.tagChip} />}
+              {!expanded && has_tags[2] && <Chip label={has_tags[2]} size="small" className={classes.filtered_tag} /> || 
+                !expanded && topThreeTags[getIndex(2)] && <Chip label={topThreeTags[getIndex(2)]} size="small" className={classes.tagChip} />}
+              </>
+            }
           </Grid>
-          <Grid item xs={3}>
-            <Rating className={classes.rating} name="Supporter Rating" precision={0.5} value={rating} readOnly />
+          <Grid item md={3} sm={12}>
+            { 
+              <Rating className={classes.rating} name="Supporter Rating" precision={0.5} value={rating} readOnly />
+            }
           </Grid>
         </Grid>
       </ExpansionPanelSummary>
