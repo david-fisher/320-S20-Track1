@@ -34,12 +34,24 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "prettier": "prettier --write src/**/*.{js,css}"
+    "prettier": "prettier --write src/**/*.{js,css}",
+    "lint:fix": "eslint src/**/*.js --fix",
+    "lint": "eslint src/**/*.js"
   },
   "husky": {
     "hooks": {
-      "pre-commit": "npm run prettier"
+      "pre-commit": "lint-staged"
     }
+  },
+  "lint-staged": {
+    "*.(js|html|css)": [
+      "npm run prettier",
+      "git add"
+    ],
+    ".js": [
+      "npm run lint:fix",
+      "npm run lint"
+    ]
   },
   "eslintConfig": {
     "extends": "react-app"
