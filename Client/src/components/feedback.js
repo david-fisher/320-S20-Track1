@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import { withStyles } from '@material-ui/core/styles';
 import Rating from '@material-ui/lab/Rating';
-import StarBorderIcon from '@material-ui/icons/StarBorder';
-import FavoriteIcon from '@material-ui/icons/Favorite';
 import SentimentVeryDissatisfiedIcon from '@material-ui/icons/SentimentVeryDissatisfied';
 import SentimentDissatisfiedIcon from '@material-ui/icons/SentimentDissatisfied';
 import SentimentSatisfiedIcon from '@material-ui/icons/SentimentSatisfied';
@@ -14,16 +11,6 @@ import Box from '@material-ui/core/Box';
 import Card from '@material-ui/core/Card';
 import Container from '@material-ui/core/Container';
 import { Grid, Button, TextField } from '@material-ui/core';
-import Cookies from 'universal-cookie';
-
-const StyledRating = withStyles({
-    iconFilled: {
-        color: '#ff6d75',
-    },
-    iconHover: {
-        color: '#ff3d47',
-    },
-})(Rating);
 
 const customIcons = {
     1: {
@@ -93,7 +80,6 @@ function handleSubmitFeedback(key, feedbackRate, feedbackString) {
 }
 
 const Feedback = props => {
-    const supporterfed = ['Experience of meeting', 'Effectiveness of meeting'];
     const [feedbackRating, setFeedbackRating] = useState(3);
     const [feedbackText, setFeedbackText] = useState('');
     return (

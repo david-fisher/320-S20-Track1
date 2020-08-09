@@ -102,16 +102,12 @@ const useStyles = makeStyles(theme => ({
 export default function MenuAppBar(props) {
     const [PossibleRoles, SetPossibleRoles] = React.useState([]);
     //Gets info from the session
-    const token = sessionStorage.getItem('token');
     const name = sessionStorage.getItem('firstName');
     const id = sessionStorage.getItem('id');
     const image = sessionStorage.getItem('image');
 
     //Sets the styling
     const classes = useStyles();
-
-    //In order to only show the toolbar when authorized
-    const [auth, setAuth] = React.useState(token !== undefined);
 
     //To handle the drop down menu
     const [anchorEl, setAnchorEl] = React.useState(null);
@@ -139,7 +135,7 @@ export default function MenuAppBar(props) {
                 //console.log(error);
                 //console.log("No Supporters Found");
             });
-    }, []);
+    }, [id]);
 
     const handleModalOpen = () => {
         setOpen(true);
@@ -167,53 +163,8 @@ export default function MenuAppBar(props) {
         sessionStorage.removeItem('token');
         window.location.reload();
     }
-    function renderNavBarButtonsBasedOnRole() {
-        let RenderButtons = [];
-        if (role.toLowerCase() == 'student') {
-            return (
-                <div style={{ width: '40%', float: 'right' }}>
-                    <Button
-                        variant="text"
-                        href="/match"
-                        className={classes.button}
-                    >
-                        Create Appointment
-                    </Button>
-                    <Button
-                        variant="text"
-                        href="/appointments"
-                        className={classes.button}
-                    >
-                        My Appointments
-                    </Button>
-                    <Button
-                        variant="text"
-                        href="/FAQ"
-                        className={classes.button}
-                    >
-                        FAQ
-                    </Button>
-                </div>
-            );
-        }
-        return (
-            <div style={{ width: '300px', float: 'right' }}>
-                >
-                <Button
-                    variant="text"
-                    href="/appointments"
-                    className={classes.button}
-                >
-                    My Appointments
-                </Button>
-                <Button variant="text" href="/FAQ" className={classes.button}>
-                    FAQ
-                </Button>
-            </div>
-        );
-    }
     const SwitchUserHandle = event => {
-        if (event.currentTarget.id == 'student') {
+        if (event.currentTarget.id === 'student') {
             cookies.set('role', 'Student');
         } else {
             cookies.set('role', event.currentTarget.id);
@@ -225,7 +176,7 @@ export default function MenuAppBar(props) {
     };
     function renderRolesInModal() {
         let RenderRoles = [];
-        if (PossibleRoles.length == 1) {
+        if (PossibleRoles.length === 1) {
             RenderRoles = <h2>Sorry, You just have 1 role.</h2>;
         } else {
             for (var i = 0; i < PossibleRoles.length; i++) {
@@ -234,7 +185,7 @@ export default function MenuAppBar(props) {
                     PossibleRoles[i].charAt(0).toUpperCase() +
                     PossibleRoles[i].slice(1);
 
-                if (PossibleRoles[i] == role.toLowerCase()) {
+                if (PossibleRoles[i] === role.toLowerCase()) {
                     continue;
                 }
 
@@ -338,7 +289,7 @@ export default function MenuAppBar(props) {
                             </MenuItem>
                         )}
 
-                        {PossibleRoles.length != 1 && (
+                        {PossibleRoles.length !== 1 && (
                             <MenuItem onClick={handleModalOpen}>
                                 <Link>
                                     <Typography component="h6" variant="h6">

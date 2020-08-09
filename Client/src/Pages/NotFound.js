@@ -1,7 +1,5 @@
 import React from 'react';
-import Grid from '@material-ui/core/Grid';
 import Container from '@material-ui/core/Container';
-import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 
 export default function notFound() {
@@ -14,7 +12,12 @@ export default function notFound() {
                 Page not found.
             </Typography>
             <br />
-            <img height="175" width="175" src="cicscareers_logo_3.png"></img>
+            <img
+                height="175"
+                width="175"
+                src="cicscareers_logo_3.png"
+                alt="cics careers"
+            ></img>
         </Container>
     );
 }

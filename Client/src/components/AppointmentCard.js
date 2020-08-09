@@ -94,15 +94,6 @@ const PreviousAppointmentCard = props => {
 
     const classes = useStyles();
     const [expanded, setExpanded] = React.useState(false);
-    const [date, setDate] = React.useState(15);
-
-    const handleBack = () => {
-        setDate(date - 1);
-    };
-
-    const handleNext = () => {
-        setDate(date + 1);
-    };
 
     const handleChange = panel => (event, isExpanded) => {
         setExpanded(isExpanded ? panel : false);
@@ -518,13 +509,13 @@ const PreviousAppointmentCard = props => {
         );
     }
 
-    if (props.role == 'supporter') {
+    if (props.role === 'supporter') {
         return supporterViewAppointmentCard();
     }
-    if (props.role == 'student') {
+    if (props.role === 'student') {
         return studentViewAppointmentCard();
     }
-    if (props.role == 'admin') {
+    if (props.role === 'admin') {
         return adminViewAppointmentCard();
     } else return null;
 };

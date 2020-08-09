@@ -12,9 +12,7 @@ import {
     Dialog,
     DialogContent,
     DialogTitle,
-    Button,
     Fab,
-    Modal,
 } from '@material-ui/core';
 import Menu from '../Navigation/appbar.js';
 import convertTime from './FindSupporter/convertTime';
@@ -90,23 +88,20 @@ const ResponsiveDrawer = props => {
     //get users role
 
     const today = new Date();
-    const [sliderTime, setSliderTime] = React.useState([540, 1020]);
     const classes = useStyles();
-    const [mobileOpen, setMobileOpen] = React.useState(false);
-    const [name, setName] = React.useState('');
     const [search, setSearch] = React.useState('');
     const [appointments, setAppointments] = React.useState([]);
     const [isLoaded, setLoaded] = React.useState(false);
     const [createAppointmentModal, setCreateAppointmentModal] = React.useState(
         false
     );
+    let filteredAppointmentList;
 
-    const blockTime = 30;
-    if (role == 'Student') {
+    if (role === 'Student') {
         if (!Array.isArray(appointments)) {
-            var filteredAppointmentList = [];
+            filteredAppointmentList = [];
         } else {
-            var filteredAppointmentList = appointments.filter(appt =>
+            filteredAppointmentList = appointments.filter(appt =>
                 String(
                     (appt.supporterFN + ' ' + appt.supporterLN).toLowerCase()
                 ).includes(search.toLowerCase())
@@ -115,9 +110,9 @@ const ResponsiveDrawer = props => {
     }
     if (role !== 'Student') {
         if (!Array.isArray(appointments)) {
-            var filteredAppointmentList = [];
+            filteredAppointmentList = [];
         } else {
-            var filteredAppointmentList = appointments.filter(appt =>
+            filteredAppointmentList = appointments.filter(appt =>
                 String(
                     (appt.supporterFN + ' ' + appt.supporterLN).toLowerCase()
                 ).includes(search.toLowerCase())
@@ -129,48 +124,8 @@ const ResponsiveDrawer = props => {
         setCreateAppointmentModal(!createAppointmentModal);
     };
 
-    const updateList = val => {
-        setName(val);
-    };
-
-    const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
-    };
-
-    const handleSliderChange = (event, newValue) => {
-        setSliderTime(newValue);
-    };
-
-    function convertToMin(t) {
-        return parseInt(t.substring(0, 2)) * 60 + parseInt(t.substring(3, 5));
-    }
-
-    function getTheMonth(month) {
-        if (parseInt(month) > 10) {
-            return month.toString();
-        } else {
-            console.log('0'.concat(month.toString()));
-            return '0'.concat(month.toString());
-        }
-    }
-
-    function checkTimeInRange(start, end, timeBlockArray) {
-        for (let i = 0; i < timeBlockArray.length; i++) {
-            if (
-                start < convertToMin(timeBlockArray[i]['end'] + blockTime) &&
-                end > convertToMin(timeBlockArray[i]['start'] + blockTime) &&
-                start !== end
-            ) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    function OnCreateAppointment() {}
-
     useEffect(() => {
-        if (role == 'Student') {
+        if (role === 'Student') {
             fetch(
                 'https://7jdf878rej.execute-api.us-east-2.amazonaws.com/test/appointments/students/%7Bid%7D?student_id=' +
                     id
@@ -185,7 +140,7 @@ const ResponsiveDrawer = props => {
                     setAppointments([]);
                     setLoaded(true);
                 });
-        } else if (role == 'supporter') {
+        } else if (role === 'supporter') {
             fetch(
                 'https://7jdf878rej.execute-api.us-east-2.amazonaws.com/test/appointments/supporters/' +
                     id
