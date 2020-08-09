@@ -1,6 +1,5 @@
 node_modules
 *.zip
-*.json
 **/.vscode
 **/external_libraries
 **/lambdas_old
