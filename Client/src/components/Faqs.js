@@ -3,9 +3,12 @@ import FaqItem from './FaqItem';
 import PropTypes from 'prop-types';
 
 class Faqs extends Component {
-    state = {
-        search: '',
-    };
+    constructor(props) {
+        super(props);
+        this.state = {
+            search: '',
+        };
+    }
 
     updateSearch(event) {
         this.setState({ search: event.target.value.substr(0, 20) });

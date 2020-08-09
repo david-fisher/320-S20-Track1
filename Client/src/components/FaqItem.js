@@ -3,13 +3,13 @@ import { Grid } from '@material-ui/core';
 import PropTypes from 'prop-types';
 
 export class FaqItem extends Component {
-    getStyle = () => {
+    getStyle() {
         return {
             background: '#ffffff',
             padding: '10px',
             borderBottom: '1px #ccc dotted',
         };
-    };
+    }
 
     render() {
         const { question, answer } = this.props.faq;
