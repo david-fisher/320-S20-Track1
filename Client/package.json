@@ -34,6 +34,7 @@
     "react-big-calendar": "^0.24.5",
     "react-calendar": "^3.0.1",
     "react-dom": "^16.13.1",
+    "react-file-picker": "0.0.6",
     "react-i18next": "^11.7.0",
     "react-router-dom": "^5.1.2",
     "react-scripts": "3.4.0",

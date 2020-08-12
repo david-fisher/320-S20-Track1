@@ -7,8 +7,11 @@ import {
   Container,
   TextField,
   Grid,
+  Badge
 } from "@material-ui/core";
-import FileUpload from '../../../../components/fileUpload';
+import { FilePicker } from 'react-file-picker'
+import PhotoCameraIcon from '@material-ui/icons/PhotoCamera';
+import ConfirmImageDialog from './ConfirmImageDialog';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -28,9 +31,12 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     align: "center",
   },
+  avatarContainer: {
+    width: "100%",
+    display: "flex",
+    justifyContent: "center",
+  },
   avatar: {
-    marginLeft: "38%",
-    marginRight: "50%",
     width: theme.spacing(25),
     height: theme.spacing(25),
     backgroundColor: "primary",
@@ -67,7 +73,7 @@ const ProfileInformation = (props) => {
   const [email, setEmail] = React.useState(settings.email);
   const [linkedIn, setLinkedIn] = React.useState(getLinkedIn(settings.link));
   const [bio, setBio] = React.useState(settings.bio);
-  const [picture, setPicture] = React.useState(settings.picture);
+  const ConfirmImageDialogRef = React.createRef();
 
   const id = sessionStorage.getItem("id")
   const url =
@@ -108,7 +114,6 @@ const ProfileInformation = (props) => {
         majors: [],
         minors: [],
         phone: phoneNumber,
-        picture: picture,
         preferred_name: prefName,
         pronouns: pronouns,
         resume: settings.resume,  
@@ -123,7 +128,6 @@ const ProfileInformation = (props) => {
       .then((response) => response.json())
       .then((json) => {
         console.log(json)
-        sessionStorage.setItem("image", picture)
         window.location.reload(false)
       });
   }
@@ -135,12 +139,32 @@ const ProfileInformation = (props) => {
           Profile Information
         </Typography>
         <form className={classes.form}>
-          <Avatar
-            // alt={firstName}
-            color="primary"
-            className={classes.avatar}
-            src={picture}
-          />
+          <div
+            className={classes.avatarContainer}
+          >
+            <Badge
+              overlap="circle"
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'right',
+              }}
+              badgeContent={
+                <FilePicker
+                  style={{ cursor: 'pointer' }}
+                  onChange={(file) => ConfirmImageDialogRef.current.handleProfileChange(file)}
+                  extensions={['jpg', 'jpeg', 'png']}
+                >
+                  <PhotoCameraIcon fontSize="large" />
+                </FilePicker>
+              }
+            >
+                <Avatar
+                  color="primary"
+                  className={classes.avatar}
+                  src={settings.picture}
+                />
+            </Badge>
+          </div>
           <br />
           <Grid container>
             <Grid item xs={3}>
@@ -244,19 +268,6 @@ const ProfileInformation = (props) => {
             onChange={(e) => setLinkedIn(e.target.value)}
 
           />
-          <FileUpload
-            onFileChange={
-              (e) => {
-                var fr = new FileReader();
-                fr.readAsDataURL(e.target.files[0]);
-                fr.onloadend = function(e) {
-                  setPicture(e.target.result);
-                }
-              }
-            }
-            FileType="image/*"
-          />
-          
           <TextField
             variant="outlined"
             margin="normal"
@@ -281,6 +292,7 @@ const ProfileInformation = (props) => {
           </Button>
         </form>
       </div>
+      <ConfirmImageDialog ref={ConfirmImageDialogRef}/>
     </Container>
   );
 };
