@@ -1,262 +1,85 @@
-import boto3
-from package.query_db import query
-from package.dictionary_to_list import dictionary_to_list
+from package.Users import Users
+from package.Students import Students
 from package.lambda_exception import LambdaException
 
-#Authors: Victoria Caruso and Hadley Pope
-#Date: 4/9/20
+# Authors: Victoria Caruso and Hadley Pope
+# Date: 4/9/20
 
-#function updates the student profile details in the database
+# Modified by Ish Chhabra
+
+# Updates the student profile details in the database.
 def update_student_profile(event, context):
-    # Student identifier
-    if 'student_id' in event:
-        student_id = int(event['student_id'])
-    else:
-        raise LambdaException("Invalid input: No user Id")
+    # Better to send the error back to frontend rather than raising a LambdaException and not giving the frontend a chance to fix it.
+    if 'student_id' not in event:
+        raise LambdaException("400: No student id specified.")
 
     student_id = int(event['student_id'])
-    student_id_param = {'name' : 'student_id', 'value' : {'longValue' : student_id}}
 
-    #Check if supporter exists
-    sql = 'SELECT * FROM students WHERE student_id = :student_id;'
-    supporter_id_param = {'name': 'student_id', 'value': {'longValue': student_id}}
-    response = query(sql, [supporter_id_param])
-    if(response['records'] == []):
-        raise LambdaException("404: Student does not exist")
+    if (not Users.exists([student_id])[student_id]):
+        raise LambdaException("404: Student not found.")
 
+    # Even though we are using multiple queries over single here, that performance boost is trivial when compared to the loss in code readability.
 
-    link_id_list = []
-    if 'links' in event:
-        links_list = event['links']
-        
-        #Check if link_type exists, and convert to link_id
-        for link_type_list in links_list:
-            sql = 'SELECT link_id FROM link WHERE link_type = :link_type;'
-            sql_parameters = [{'name': 'link_type', 'value': {'stringValue': link_type_list[0]}}]
-            response = query(sql, sql_parameters)
-            if(response['records'] ==[]):
-                raise LambdaException("404: link_id:" + str(entry) + " does not exist")
-            else:
-                link_id_list.append((response['records'][0][0]['longValue'], link_type_list[1]))
+    # User settings
 
-    #User links
-    #Execute parameterized query to delete supporter's old links
-    if len(link_id_list) > 0:
-        sql = "DELETE FROM user_link WHERE user_id = :student_id;"
-        try:
-            query(sql, [student_id_param])
-        except Exception as e:
-            raise LambdaException("500: Unable to delete links" + str(e))
-    
-        #Execute parameterized queries for updating links
-        for link_id, link in link_id_list:
-            sql = 'INSERT INTO user_link (user_id, link_id, link) VALUES (:student_id, :link_id, :link);'
-            sql_parameters = [student_id_param, {'name': 'link_id', 'value': {'longValue': link_id}}, {'name': 'link', 'value': {'stringValue': link}}]
-            major_response = query(sql, sql_parameters)
-            if(major_response["numberOfRecordsUpdated"] == 0):
-                raise LambdaException("409: User links not updated")
+    if 'first_name' in event and event['first_name'].strip() != "":
+        Users.set_first_name(student_id, event["first_name"])
 
+    if 'last_name' in event and event['last_name'].strip() != "":
+        Users.set_last_name(student_id, event["last_name"])
 
-    #Student Colleges
-    college_id_list = []
-    if 'colleges' in event:
-        college_list = event['colleges']
-        
-        #Check if college_id exists
-        for entry in college_list:
-            sql = 'SELECT college_id FROM college WHERE college = :college;'
-            sql_parameters = [{'name': 'college', 'value': {'stringValue': entry}}]
-            response = query(sql, sql_parameters)
-            if(response['records'] ==[]):
-                raise LambdaException("404: college_id:" + str(entry) + " does not exist")
-            else:
-                college_id_list.append(response['records'][0][0]['longValue'])
+    if 'preferred_name' in event and event['preferred_name']:
+        Users.set_preferred_name(student_id, event['preferred_name'])
 
-    #Execute parameterized query to delete student's old colleges
-    if len(college_id_list) > 0:
-        sql = 'DELETE FROM student_college WHERE student_id = :student_id;'
-        try:
-            query(sql, [student_id_param])
-        except Exception as e:
-            raise LambdaException("500: Unable to delete student colleges, " + str(e))
-    
-        #Execute parameterized queries for updating major preferences
-        for entry in college_id_list:
-            sql = 'INSERT INTO student_college (student_id, college_id) VALUES (:student_id, :college_id);'
-            sql_parameters = [student_id_param, {'name': 'college_id', 'value': {'longValue': entry}}]
-            college_response = query(sql, sql_parameters)
-            if(college_response["numberOfRecordsUpdated"] == 0):
-                raise LambdaException("409: student_colleges not updated")      
+    if 'email' in event and event['email'].strip() != "":
+        Users.set_email(student_id, event["email"])
 
+    if 'bio' in event and event['bio'].strip() != "":
+        Users.set_bio(student_id, event["bio"])
 
-    #Student Majors
-    major_id_list = []
-    if 'majors' in event:
-        major_list = event['majors']
-        
-        #Check if major_id exists
-        for entry in major_list:
-            sql = 'SELECT major_id FROM major WHERE major = :major;'
-            sql_parameters = [{'name': 'major', 'value': {'stringValue': entry}}]
-            response = query(sql, sql_parameters)
-            if(response['records'] ==[]):
-                raise LambdaException("404: major_id: " + str(entry) + " does not exist")
-            else:
-                major_id_list.append(response['records'][0][0]['longValue'])
+    if 'pronouns' in event and event['pronouns'].strip() != "":
+        Users.set_pronouns(student_id, event["pronouns"])
 
-    #Execute parameterized query to delete student's old majors
-    if len(major_id_list) > 0:
-        sql = 'DELETE FROM student_majors WHERE student_id = :student_id;'
-        try:
-            query(sql, [student_id_param])
-        except Exception as e:
-            raise LambdaException("500: Unable to delete student majors, " + str(e))
-    
-        #Execute parameterized queries for updating major preferences
-        for entry in major_id_list:
-            sql = 'INSERT INTO student_majors (student_id, major_id) VALUES (:student_id, :major_id);'
-            sql_parameters = [student_id_param, {'name': 'major_id', 'value': {'longValue': entry}}]
-            major_response = query(sql, sql_parameters)
-            if(major_response["numberOfRecordsUpdated"] == 0):
-                raise LambdaException("409: student_majors majors not updated")
+    if 'gender' in event and event['gender'].strip() != "":
+        Users.set_gender(student_id, event["gender"])
 
-    
-    #Student Minors
-    minor_id_list = []
-    if 'minors' in event:
-        minor_list = event['minors']
-        
-        #Check if minor_id exists
-        for entry in minor_list:
-            sql = 'SELECT minor_id FROM minor WHERE minor = :minor;'
-            sql_parameters = [{'name': 'minor', 'value': {'stringValue': entry}}]
-            response = query(sql, sql_parameters)
-            if(response['records'] ==[]):
-                raise LambdaException("404: minor_id:" + str(entry) + " does not exist")
-            else:
-                minor_id_list.append(response['records'][0][0]['longValue'])
+    if 'phone' in event and event['phone'].strip() != "":
+        Users.set_phone(student_id, event["phone"])
 
-    #Execute parameterized query to delete supporter's old minor preferences
-    if len(minor_id_list) > 0:
-        sql = 'DELETE FROM student_minors WHERE student_id = :student_id;'
-        try:
-            query(sql, [supporter_id_param])
-        except Exception as e:
-            raise LambdaException("500: Unable to delete student minors")
-    
-        for entry in minor_id_list:
-            sql = 'INSERT INTO student_minors (student_id, minor_id) VALUES (:student_id, :minor_id);'
-            sql_parameters = [student_id_param, {'name': 'minor_id', 'value': {'longValue': entry}}]
-            minor_response = query(sql, sql_parameters)
-            if(minor_response["numberOfRecordsUpdated"] == 0):
-                raise LambdaException("409: student_minors not updated")
+    # Structure of event['links']: [[link_type, link], ...]
+    if 'links' in event and event['links'] != []:
+        Users.set_links_by_type(
+            student_id, 
+            ([{'link_type': link[0], 'link_id': link[1]}] for link in event['links'])
+        )
 
-
-    #User settings
-    user_settings = {}
-    updated_user_vals = []
-
-    if event['first_name'] != "":
-        first_name = event['first_name']
-        user_settings['first_name'] = first_name
-        updated_user_vals.append("first_name = :first_name")
-
-    if event['last_name'] != "":        
-        last_name = event['last_name']
-        user_settings['last_name'] = last_name
-        updated_user_vals.append("last_name = :last_name")
-        
-    if event['email'] != "":
-        email = event['email']
-        user_settings['email'] = email
-        updated_user_vals.append("email = :email")
-
-    if event['preferred_name'] != "":
-        preferred_name = event['preferred_name']
-        user_settings['preferred_name'] = preferred_name
-        updated_user_vals.append("preferred_name = :preferred_name")
-
-    if event['bio'] != "":
-        bio = event['bio']
-        user_settings['bio'] = bio
-        updated_user_vals.append("bio = :bio")
-
-    if event['pronouns'] != "":
-        pronouns = event['pronouns']
-        user_settings['pronouns'] = pronouns
-        updated_user_vals.append("pronouns = :pronouns")
-        
-    if event['gender'] != "":
-        gender = event['gender']
-        user_settings['gender'] = gender
-        updated_user_vals.append("gender = :gender")
-
-    if event['phone'] != "":
-        phone = event['phone']
-        user_settings['phone'] = phone
-        updated_user_vals.append("phone = :phone")
-
-    user_settings_sql = "UPDATE users SET " + ", ".join(updated_user_vals) + " WHERE id = :student_id;"
-    user_settings_params = dictionary_to_list(user_settings) 
-    user_settings_params.append(supporter_id_param)
-
-    if len(updated_user_vals) > 0:
-        try:
-            query(user_settings_sql, user_settings_params)
-        except Exception as e:
-            raise LambdaException("500: Unable to update users table, " + str(e))
-
+    # Profile picture upload is shifted to a new method entirely.
     # Profile Picture
-    if event['picture'] != "":
-        upload_profile_picture(student_id, event['picture'])
+    # if event['picture'] != "":
+    #     upload_profile_picture(student_id, event['picture'])
 
     # Student Settings
-    student_settings = {}
-    updated_student_vals = []
 
-    if event['grad_student'] != "":
-        grad_student = event['grad_student'].lower()
+    if 'majors' in event:
+        Students.set_majors_by_name(student_id, event['majors'])
+    
+    if 'minors' in event:
+        Students.set_minors_by_name(student_id, event['minors'])
+    
+    if 'grad_student' in event and event['grad_student'] != "": # Not sure what the second check is for but kept it until I check into it.
+        Students.set_grad_student(student_id, event['grad_student'] == "true")
 
-        if grad_student == "true":
-            grad_student_bool = True
-        else:
-            grad_student_bool = False
+    if 'grad_year' in event and event['grad_year'].strip() != "": # Again, not sure when would the frontend send a blank value here.
+        Students.set_grad_yr(student_id, int(event['grad_year']))
 
-        student_settings['grad_student'] = grad_student_bool
-        updated_student_vals.append("grad_student = :grad_student")
+    if 'resume' in event and event['resume'].strip() != "":
+        Students.set_resume(student_id, event['resume'])
 
-    if event['grad_year'] != "":
-        grad_year = int(event['grad_year'])
-        student_settings['grad_year'] = grad_year
-        updated_student_vals.append("grad_year = :grad_year")
+    # Structure of event['links']: List of college names.
+    if 'colleges' in event and event['colleges'] != []:
+        Students.set_colleges_by_name(student_id, event['colleges'])
 
-    if event['resume'] != "":
-        resume = event['resume']
-        student_settings['resume'] = resume
-        updated_student_vals.append("resume = :resume")
-
-    student_settings_sql = "UPDATE students SET " + ", ".join(updated_student_vals) + " WHERE student_id = :student_id;"
-    student_settings_params = dictionary_to_list(student_settings)
-    student_settings_params.append(student_id_param)
-
-    if len(updated_student_vals) > 0:
-        try:
-            query(student_settings_sql, student_settings_params)
-        except Exception as e:
-            raise LambdaException("500: Failed to update students table, " + str(e))
-
-
-    print("Updated Student Profile")
     return {
-        'body' : "Successfully updated student profile"
+        'body' : "Student profile updated successfully.",
+        'statusCode': 200
     }
-
-def upload_profile_picture(student_id, picData):
-    s_3 = boto3.client('s3')
-    bucket_name_images = 't1-s3-us-east-1-images' # s3 bucket for images
-    file_path = 'profile/' + str(student_id) + '/image'
-
-    try:
-        s_3.put_object(Bucket=bucket_name_images, Key=file_path, Body=picData)
-    except Exception as e:
-        raise LambdaException("400: Failed to upload file. " + str(e))

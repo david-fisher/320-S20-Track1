@@ -2,8 +2,10 @@ import boto3
 
 from package.query_db import query
 from package.lambda_exception import LambdaException
-from package.s3_utils import get_image
 from datetime import datetime, date, timedelta
+
+from package.Users import Users
+from package.Supporters import Supporters
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -44,83 +46,54 @@ def get_scheduled_appointments(start_datetime, end_datetime):
 
 # Fills supporter profile information in the dictionary.
 def fill_supporter_information(available_supporters):
-    supporters = ["NULL"]
+    if(len(available_supporters) == 0):
+        return
+
+    supporter_ids = []
     for supporter in available_supporters.keys():
-        supporters.append(str(supporter))
+        supporter_ids.append(supporter)
 
-    sql = f"""SELECT S.supporter_id, U.preferred_name, U.first_name, U.last_name, S.rating, S.employer, S.title, S.office, (SELECT link FROM user_link WHERE user_id = U.id AND link_id = (SELECT link_id FROM link WHERE link_type = 'LinkedIn')), (SELECT tag_type FROM tag_type WHERE tag_type_id = ST.tag_type_id), SPS.grad_student, SPS.hours_before_appointment, (SELECT major FROM major WHERE major_id = SMP.major_id), SS.max_students, SS.duration, (SELECT specialization_type FROM specialization_type WHERE specialization_type_id = SS.specialization_type_id), (SELECT medium FROM medium where medium_id = SM.medium_id)
-    FROM users U, supporters S, supporter_tags ST, supporter_preferences_for_students SPS, supporter_major_preferences SMP, supporter_specializations SS, supporter_mediums SM
-    WHERE U.id IN({",".join(supporters)})
-    AND U.id = S.user_id
-    AND S.supporter_id = ST.supporter_id
-    AND S.supporter_id = SPS.supporter_id
-    AND SPS.supporter_id = SMP.supporter_id
-    AND S.supporter_id = SS.supporter_id
-    AND S.supporter_id = SM.supporter_id"""
+    names = Users.get_name(supporter_ids)
+    ratings = {supporter_id: {'rating': rating} for supporter_id, rating in Supporters.get_rating(supporter_ids).items()}
+    employers = {supporter_id: {'employer': employer} for supporter_id, employer in Supporters.get_employer(supporter_ids).items()}
+    titles = {supporter_id: {'title': title} for supporter_id, title in Supporters.get_title(supporter_ids).items()}
+    offices = {supporter_id: {'office': office} for supporter_id, office in Supporters.get_office(supporter_ids).items()}
+    profiles = {supporter_id: {'imgsrc': imgsrc} for supporter_id, imgsrc in Users.get_profile(supporter_ids).items()}
+    tags = {supporter_id: {'tags': [tag['tag'] for tag in tags]} for supporter_id, tags in Supporters.get_tag_preferences(supporter_ids).items()}
+    student_preferences = {
+        supporter_id: {
+            'preferences': {
+                'grad_student': student_preferences['grad_student'],
+                'hours_before_appointment': student_preferences['hours_before_appointment']
+            }
+        } for supporter_id, student_preferences in Supporters.get_student_preferences(supporter_ids).items()
+    }
+    major_preferences = {
+        supporter_id: {
+            'preferences': {
+                'major_prefs': [major['major'] for major in majors]
+            }
+        } for supporter_id, majors in Supporters.get_major_preferences(supporter_ids).items()
+    }
+    preferences = merge({}, student_preferences, major_preferences)
+    mediums = {supporter_id: {'mediums': [medium['medium'] for medium in mediums]} for supporter_id, mediums in Supporters.get_supporter_mediums(supporter_ids).items()}
+    topics = {supporter_id: {
+        topic['specialization_type']: {
+            'duration': topic['duration'],
+            'max_students': topic['max_students']
+        } for topic in topics
+    } for supporter_id, topics in Supporters.get_specialization_preferences(supporter_ids).items()}
     
+    
+    merge(available_supporters, names, ratings, employers, titles, offices, profiles, tags, preferences, mediums, topics)
+    
+    sql = f"""SELECT S.supporter_id, (SELECT link FROM user_link WHERE user_id = U.id AND link_id = (SELECT link_id FROM link WHERE link_type = 'LinkedIn'))
+        FROM users U, supporters S
+        WHERE U.id IN({",".join([str(supporter_id) for supporter_id in supporter_ids])}) AND U.id = S.user_id"""
     sql_result = query(sql)['records']
-    
-    supporters.remove("NULL")
-
     for record in sql_result:
         supporter_id = record[0]['longValue']
-
-        # Remove supporter_id from supporters when partial information is filled.
-        if str(supporter_id) in supporters:
-            available_supporters[supporter_id]['supporter_id'] = supporter_id
-
-            if 'stringValue' in record[1] and record[1]['stringValue'].strip() != "":
-                available_supporters[supporter_id]['name'] = record[1]['stringValue']
-            else:
-                available_supporters[supporter_id]['name'] = f"{record[2]['stringValue']} {record[3]['stringValue']}"
-            
-            available_supporters[supporter_id]['rating'] = record[4]['stringValue'] if 'stringValue' in record[4] else ""
-            available_supporters[supporter_id]['employer'] = record[5]['stringValue'] if 'stringValue' in record[5] else ""
-            available_supporters[supporter_id]['title'] = record[6]['stringValue'] if 'stringValue' in record[6] else ""
-            available_supporters[supporter_id]['office'] = record[7]['stringValue'] if 'stringValue' in record[7] else ""
-            available_supporters[supporter_id]['LinkedIn'] = record[8]['stringValue'] if 'stringValue' in record[8] else ""
-            available_supporters[supporter_id]['imgsrc'] = get_image(f"profile/{supporter_id}/image")
-        
-            if 'stringValue' in record[9]:
-                available_supporters[supporter_id]['tags'] = [record[9]['stringValue']]
-            else:
-                available_supporters[supporter_id]['tags'] = []
-    
-            available_supporters[supporter_id]['preferences'] = {
-                'grad_student': record[10]['booleanValue'],
-                'hours_before_appointment': record[11]['longValue'],
-                'major_prefs': [record[12]['stringValue']],
-            }
-            available_supporters[supporter_id]['tags'] = [record[9]['stringValue']] if 'stringValue' in record[9] else []
-            available_supporters[supporter_id]['mediums'] = [record[16]['stringValue']]
-            available_supporters[supporter_id]['topics'] = {
-                record[15]['stringValue']: {
-                    'duration': record[14]['longValue'],
-                    'max_students': record[13]['longValue']
-                }
-            }
-
-            supporters.remove(str(supporter_id))
-        else:
-            if record[9]['stringValue'] not in available_supporters[supporter_id]['tags']:
-                available_supporters[supporter_id]['tags'].append(record[9]['stringValue'])
-            
-            if record[12]['stringValue'] not in available_supporters[supporter_id]['preferences']['major_prefs']:
-                available_supporters[supporter_id]['preferences']['major_prefs'].append(record[12]['stringValue'])
-            
-            if record[15]['stringValue'] not in available_supporters[supporter_id]['topics']:
-                topic = {
-                    'duration': record[14]['longValue'],
-                    'max_students': record[13]['longValue']
-                }
-                available_supporters[supporter_id]['topics'][record[15]['stringValue']] = topic
-            
-            if record[16]['stringValue'] not in available_supporters[supporter_id]['mediums']:
-                available_supporters[supporter_id]['mediums'].append(record[16]['stringValue'])
-    
-    # Delete all supporters with no personal information.
-    for supporter_id in supporters:
-        del available_supporters[int(supporter_id)]
+        available_supporters[supporter_id]['LinkedIn'] = record[1]['stringValue'] if 'stringValue' in record[1] else ""
 
 # Gets a dictionary with all available appointments by supporter.
 def get_available_appointments(start_datetime, end_datetime, scheduled_appointments):
@@ -139,6 +112,7 @@ def get_available_appointments(start_datetime, end_datetime, scheduled_appointme
         supporter_id = record[0]['longValue']
         if supporter_id not in appointment_blocks:
             appointment_blocks[supporter_id] = {}
+            appointment_blocks[supporter_id]['supporter_id'] = supporter_id
             appointment_blocks[supporter_id]['timeBlocks'] = []
 
         start_datetime = datetime.strptime(record[1]['stringValue'], DATETIME_FORMAT)
@@ -171,6 +145,20 @@ def get_available_appointments(start_datetime, end_datetime, scheduled_appointme
 # Rounds the time to the next multiple of delta.
 def ceil_dt(dt, delta):
     return dt + (datetime.min - dt) % delta
+
+# Merges all the following dictionaries into the first dictionary.
+def merge(arg1, *argv):
+    for arg in argv:
+        _merge(arg1, arg)
+    
+    return arg1
+
+def _merge(d1, d2):
+    for k, v in d1.items():
+        if k in d2:
+            d2[k] = _merge(v, d2[k])
+    d1.update(d2)
+    return d1
 
 def main(event, context):
     today = date.today()
