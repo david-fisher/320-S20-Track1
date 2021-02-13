@@ -24,6 +24,7 @@ const SupporterCard = (props) => {
   const [openCreated, setOpenCreated] = React.useState(false);
   const [expanded, setExpanded] = React.useState(false);
   const [medium, setMedium] = React.useState("")
+  const [pronoun, setPronoun] = React.useState("...");
   const [dur,setDur]=React.useState(topics[apptTopic]!==undefined ? topics[apptTopic].duration : 0)
   const has_tags=supporter_has_tags()
   const startTimes = [];
@@ -295,6 +296,8 @@ const SupporterCard = (props) => {
             </Badge>
           )}
           {LinkedIn === "" && <Avatar alt={name} src={imgsrc} className={classes.large} />}
+	   <br />
+	   {pronoun}
           </Grid>
           <Grid item xs={12} align="center">
             <Button
